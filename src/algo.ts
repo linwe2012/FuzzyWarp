@@ -152,6 +152,7 @@ function dpMinPath(graph:number[][], from: Position2D, to: Position2D) : [number
         }
         // console.assert(pos.x >=0 && pos.y <= 0, "DP failed: Out of Boundry")
     }
+    pathDir.shift();
     return [min, pathDir]
 }
 
@@ -169,9 +170,6 @@ function fuzzySimGraph(w1: number, w2:number, T0: Vector3[], T1: Vector3[]) {
     // ------------------------------
     const len0 = T0.length
     const len1 = T1.length
-
-    //T0.push(T0[0])
-    //T1.push(T1[0])
 
     const graph = new Array<Array<number>>();
 
@@ -214,7 +212,7 @@ function fuzzySimGraph(w1: number, w2:number, T0: Vector3[], T1: Vector3[]) {
     let the_i = -1;
 
     for(let i = 0; i < len0; ++i) {
-        const [this_min, this_pathDir] = dpMinPath(graph, {x:0, y:i}, {x:len0, y:i+len1});
+        const [this_min, this_pathDir] = dpMinPath(graph, {x:0, y:i}, {x:len0+1, y:i+len1+1});
         if(min > this_min) {
             the_i = i;
             pathDir = this_pathDir;
@@ -230,13 +228,18 @@ function fuzzySimGraph(w1: number, w2:number, T0: Vector3[], T1: Vector3[]) {
         lookup[index % len1] = mapped;
         if(pathDir[i] === DPDirection.DownLeft) {
             --mapped;
+            if(mapped < 0) {
+                break;
+            }
         }
+        
     }
     lookup[the_i % len1] = 0
 
     return lookup;
 }
 
+// Get angles of triangles
 type AnglesOfTriangle  = [number, number, number]
 const getTriAngles = (t: TriangleVec) : AnglesOfTriangle => {
     const e0 = t[0].clone().sub(t[1])
@@ -298,10 +301,12 @@ function smooth_a(a:number, b:number, c:number, w1:number, w2: number,
     const S = smoothS(w1, w2, t0, t1);
     const R = bisect(t0).angleTo(bisect(t1))
     const A = (area(t0) + area(t1)) / poly_area_sum
+    if (A < 1e-2) {
+        return -Infinity
+    }
     return a * S + b * (1-R/Math.PI) + c * A
 }
-
-
+/*
 
 function smoothKeyPoints(T0:Vector3[], T1:Vector3[], lookup: Int32Array, params:FuzzyParams) {
     interface Smooth {
@@ -332,9 +337,10 @@ function smoothKeyPoints(T0:Vector3[], T1:Vector3[], lookup: Int32Array, params:
             [T1[u], T1[v], T1[w]],
             [T0[u0], T0[v0], T0[w0]]
             );
+        //TODO: is idx `u` or `i`
         smooth.push({
             val: s,
-            idx: i
+            idx: u
         })
     }
 
@@ -344,6 +350,54 @@ function smoothKeyPoints(T0:Vector3[], T1:Vector3[], lookup: Int32Array, params:
     return [ smooth[0].idx, smooth[1].idx, smooth[2].idx  ]
 }
 
+*/
+function smoothKeyPoints(T0:Vector3[], T1:Vector3[], lookup: Int32Array, params:FuzzyParams) {
+    interface Smooth {
+        val: number
+        idx: [number, number, number]
+    };
+
+    const reverse_lookup = new Array<number>()
+    for(let i = 0; i < T1.length; ++i) {
+        reverse_lookup[lookup[i]] = i
+    }
+
+    const smooth = new Array<Smooth>();
+    const { smooth_a: a, smooth_b:b, smooth_c:c, smooth_w1: w1, smooth_w2: w2 } = params;
+
+    const area_sum = polygonArea(T0) + polygonArea(T1);
+
+    for(let i = 0; i < T0.length; ++i) {
+        for(let j = 0; j < T0.length; ++j) {
+            for(let k = 0; k < T0.length; ++k) {
+                const u0 = i;
+                const v0 = j % T0.length;
+                const w0 = k % T0.length;
+
+                if(u0 == j || u0 == k || v0 == i || v0 == k || w0==i || w0 == j ){
+                    continue;
+                }
+                const u = reverse_lookup[u0]
+                const v = reverse_lookup[v0]
+                const w = reverse_lookup[w0]
+
+                const s = smooth_a(a, b, c, w1, w2, area_sum, 
+                    [T1[u], T1[v], T1[w]],
+                    [T0[u0], T0[v0], T0[w0]]
+                    );
+                //TODO: is idx `u` or `i`
+            smooth.push({
+                val: s,
+                idx: [u, v, w]
+            })
+            }
+        }
+
+    }
+    // sort in descending order
+    smooth.sort((a, b)=>(b.val - a.val))
+    return smooth[0].idx
+}
 
 class Mat2 {
     // column major, in accordance with threejs
@@ -394,7 +448,7 @@ class Mat2 {
     // decompose to rotation theta & affine matrix
     decompose() : [number, Mat2] {
         const det = this.det();
-        const sign = Math.sign(det)
+        const sign = 1// Math.sign(det)
 
         const B = new Mat2();
         const b = B.data;
@@ -414,9 +468,12 @@ class Mat2 {
         
         const cos = b[0]
         const sin = b[1]
-        //todo: this steps is possibly not needed
-        const ref = Math.abs(Math.asin(sin))
+        //const theta = Math.asin(sin)
+
+        //return [theta, C]
+        const ref = Math.asin(Math.abs(sin))
         let theta = ref;
+        console.log('ref,', ref)
         if(cos > 0 && sin > 0) {
             theta = ref;
         }
@@ -432,7 +489,8 @@ class Mat2 {
         if(theta > Math.PI) {
             theta -= 2*Math.PI
         }
-        
+        const U = new Mat2().fromRotate(theta);
+        const T = new Mat2().mul(U, C);
         return [theta, C]
     }
 
@@ -486,6 +544,7 @@ class Mat2 {
 }
 
 interface Trans {
+    raw_transform: Matrix3
     translate: Vector2
     theta: number
     affine: Mat2
@@ -514,6 +573,7 @@ function computeTransform(from:TriangleVec, to: TriangleVec) : Trans {
     const [theta, affine] = complex.decompose();
     
     return {
+        raw_transform: transform,
         translate: translate,
         theta: theta,
         affine: affine,
@@ -575,7 +635,8 @@ export class FuzzyWarp {
         translate: new Vector2(),
         theta: 0,
         affine: new Mat2(),
-        begin: new Vector3()
+        begin: new Vector3(),
+        raw_transform: new Matrix3()
     }
 
     // for debug purpose
@@ -589,7 +650,10 @@ export class FuzzyWarp {
         this.T1 = [...T1]
 
         this.lookup = fuzzySimGraph(params.sim_w1, params.sim_w2, T0, T1);
-        this.keyPoints = smoothKeyPoints(T0, T1, this.lookup, params)
+        this.keyPoints = smoothKeyPoints(T0, T1, this.lookup, params);
+
+        console.log('lookup', this.lookup)
+        console.log('key points', this.keyPoints)
 
         let k = this.keyPoints
         this.T1_local = global2LocalCoords(
@@ -615,28 +679,33 @@ export class FuzzyWarp {
             [T0[k[0]], T0[k[1]], T0[k[2]]]
         )
         
-        /*
-        this.T0_to_T1 = []
-        this.T1_to_T0 = []
+        const t = 1;
+        const trans = this.Trans_T1_to_T0;
+        const A0 = new Mat2().scaledIndentity(1-t)
+        const B0 = new Mat2().fromRotate(t * trans.theta)
+        const C0 = trans.affine.clone().mulScalar(t)
+        const D0 = new Mat2().mul(B0, C0)
+        A0.add(D0)
+        const newGlobalCoords = this.keyPoints.map(v=>{
+            const i = this.T1[v].clone()
+            A0.apply2Vector3(i)
+            return i
+        })
+        
+        const added = newGlobalCoords.map(v=>{
+            const i =  v.clone()
+            i.add(new Vector3(trans.translate.x, trans.translate.y));
+            return i;
+        })
 
-        for(let i = 0; i < this.keyPoints.length; ++i) {
-            const a = i;
-            const b = (i+1) % this.keyPoints.length
-            const c = (i+2) % this.keyPoints.length
+        const debug_nde_ = this.keyPoints.map(v=>{
+            const i = this.T1[v].clone()
+            i.z = 1;
+            i.applyMatrix3(trans.raw_transform)
+            return i;
+        })
 
-            const a0 = this.lookup[a]
-            const b0 = this.lookup[b]
-            const c0 = this.lookup[c]
-            this.T0_to_T1.push(computeTransform(
-                [T0[a0], T0[b0], T0[c0]],
-                [T1[a], T1[b], T1[c]]
-            ))
-            
-            this.T1_to_T0.push(computeTransform(
-                [T1[a], T1[b], T1[c]],
-                [T0[a0], T0[b0], T0[c0]]
-            ))
-        }*/
+        console.log(this.Trans_T1_to_T0)
     }
 
     private _interpLocal(t:number) {
@@ -657,13 +726,7 @@ export class FuzzyWarp {
         const C0 = trans.affine.clone().mulScalar(t)
         const D0 = new Mat2().mul(B0, C0)
         A0.add(D0)
-        /*
-        const newGlobalCoords = this.T1_to_T0.map((v, idx)=>{
-            const r = v.begin.clone()
-            A0.apply2Vector3(r);
-            return r;
-        });
-        */
+
         const newGlobalCoords = this.keyPoints.map(v=>{
             const i = this.T1[v].clone()
             A0.apply2Vector3(i)
@@ -673,6 +736,8 @@ export class FuzzyWarp {
         for(let v of newGlobalCoords) {
             v.add(new Vector3(trans.translate.x*t, trans.translate.y*t))
         }
+
+        
 
         //return local2GlobalCoords(
         //    newGlobalCoords as TriangleVec,
@@ -688,9 +753,9 @@ export class FuzzyWarp {
 
 export function getDefaultFuzzyParams() : FuzzyParams {
     return{
-        smooth_a: 1.0/3,
-        smooth_b: 1.0/3,
-        smooth_c: 1.0/3,
+        smooth_a: 0.2, // shape similarity
+        smooth_b: 0.3, // min rotation
+        smooth_c: 0.5, // max area coverage
         smooth_w1: 0.5,
         smooth_w2: 0.5,
 

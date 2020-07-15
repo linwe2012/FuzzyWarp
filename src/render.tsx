@@ -182,10 +182,32 @@ function render() {
     }
 }
 
+const keyPoints = new THREE.Group()
+scene.add(keyPoints)
+
+const addDots = (vec : Vector3[]) => {
+    [0xff0000, 0x00ff00, 0x0000ff].map((v, idx)=>{
+        const mat = new THREE.MeshBasicMaterial({color: v});
+        const geo = new THREE.CircleGeometry(0.06, 10)
+        const c = new THREE.Mesh(geo, mat);
+        c.position.set(vec[idx].x, vec[idx].y, vec[idx].z);
+        keyPoints.add(c)
+    })
+}
+
 const triggerTransform = ()=>{
     fuzzyWarper.init(A_vertices, B_vertices, getDefaultFuzzyParams())
+    addDots(fuzzyWarper.keyPoints.map(v=>{
+        return B_vertices[v]
+    }))
+
+    addDots(fuzzyWarper.keyPoints.map(v=>{
+        return A_vertices[fuzzyWarper.lookup[v]]
+    }))
+
     isTransforming = true
     time = 0
+
 }
 
 render();

@@ -7,8 +7,8 @@ const App: React.FC = () => {
   return (
     <div className="App">
       <div className="canvas" id="canvas-frame" style={{
-        width: 400,
-        height: 400
+        width: 800,
+        height: 600
       }}>
         <Render>
 
