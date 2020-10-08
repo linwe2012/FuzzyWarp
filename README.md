@@ -13,6 +13,7 @@ This project is 3rd course project for computer animations in ZJU.
 **Try [online Demo hosted on Github Pages](https://linwe2012.github.io/FuzzyWarp/)**
 
 Demo (Click to see full demo on Youtube):
+
 [![Demo](https://j.gifs.com/4QBO57.gif)](https://youtu.be/KCKw1l-7f_s)
 
 
