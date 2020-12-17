@@ -18,6 +18,9 @@ const App: React.FC = () => {
         </Render>
       </div>
       <div style={{marginLeft: 10, textAlign: 'left'}}>
+      <a href='https://github.com/linwe2012/FuzzyWarp'>Github Source Code</a> <span> &nbsp; &nbsp; </span>
+      <a href='https://ieeexplore.ieee.org/abstract/document/511850'>Paper on IEEE</a> <br/>
+      <a href='https://github.com/linwe2012/FuzzyWarp/blob/master/docs/FuzzyApproach.pdf'>[PDF] A fuzzy approach to digital image warping</a>
       <h3>Usage: </h3>
       <li> Click on the gray area to make 1st shape </li>
       <li> Click toggle button, then you can make 2nd shape </li>
