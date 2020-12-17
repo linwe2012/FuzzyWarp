@@ -1,8 +1,11 @@
-import React from 'react';
+import React, {useState} from 'react';
 import './App.css';
-import Render from './render';
+import Render, { RenderSettings } from './render';
+
+import PersonalPage from './personal_page'
 
 const App: React.FC = () => {
+  const [handle, setHandle] = useState<any>(undefined)
   
   return (
     <div className="App" style={{display:'flex'}}>
@@ -10,17 +13,26 @@ const App: React.FC = () => {
         width: 800,
         height: 600
       }}>
-        <Render>
+        <Render onHandle={(h)=>setHandle(h)}>
 
         </Render>
       </div>
       <div style={{marginLeft: 10, textAlign: 'left'}}>
-      <p>Usage: </p>
-      <li> Click on gray area to make 1st shape </li>
-      <li> Click toggle to make 2nd shape, <em>Make sure 2nd shape has more vertices than first one</em> </li>
-      <li> Click tranform to see the transform </li>
+      <h3>Usage: </h3>
+      <li> Click on the gray area to make 1st shape </li>
+      <li> Click toggle button, then you can make 2nd shape </li>
+      <li> Click tranform to see the animation </li>
 
       <li> refresh page to try new transfroms </li>
+
+      <div className='seperator'></div>
+      <h3>Parameters: </h3>
+
+      <RenderSettings handle={handle}></RenderSettings>
+      <div className='seperator'></div>
+      <h3> Note: </h3>
+      <li> The 3 dots, blue, green, red indicates the reference points, This can be changed via Fuzzy polygon similarity. </li>
+      <PersonalPage/>
       </div>
     </div>
   );

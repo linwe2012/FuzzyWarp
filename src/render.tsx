@@ -5,18 +5,84 @@ import * as THREE from 'three'
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls'
 // import { DragControls } from 'three/examples/jsm/controls/DragControls'
 
-import {FuzzyWarp, getDefaultFuzzyParams, Test} from './algo'
+import {FuzzyWarp, getDefaultFuzzyParams, Test, FuzzyParams} from './algo'
 import { Vector3 } from 'three'
 
 interface RenderProps {
+    onHandle?: (x:any)=>any
 }
 
+interface RenderSettingsProps {
+    handle?: ReturnType<typeof RunAll>
+}
+
+export const RenderSettings : React.FC<RenderSettingsProps> = (props)=>{
+    const [params, setParams] = useState(getDefaultFuzzyParams())
+    const chParam = (k: keyof FuzzyParams)=>{
+        return (e:React.ChangeEvent<HTMLInputElement>)=>{
+            const res = parseFloat(e.target.value)
+            const nparam = { ...params }
+            if(k === 'sim_w1') {
+                nparam.sim_w1 = res
+                nparam.sim_w2 = 1 - res
+            }
+            if(k === 'smooth_w1') {
+                nparam.smooth_w1 = res
+                nparam.smooth_w2 = 1 - res
+            }
+            if(k === 'smooth_a' || k === 'smooth_b') {
+                nparam[k] = res
+                const c = nparam.smooth_a + nparam.smooth_b
+                if(c > 1) {
+                    return
+                }
+
+                else {
+                    nparam.smooth_c = 1 - c;
+                }
+            }
+            const rprams = {
+                ...nparam,
+                [k]: res
+            }
+            setParams(rprams)
+            if(props.handle) {
+                props.handle.setDefaultParameter(rprams)
+            }
+        }
+    }
+
+    return (
+        <div>
+        <h4>Fuzzy polygon similarity</h4>
+        <p><span>&omega; <sub>1</sub> (match size) </span><input type="range" min="0" max="1" step="0.01" defaultValue={params.sim_w1} onChange={chParam('sim_w1')} ></input> {params.sim_w1} </p>
+        <p><span>&omega; <sub>2</sub> (match shape)</span><input type="range" min="0" max="1" step="0.01" value={params.sim_w2} readOnly></input> {params.sim_w2} </p>
+        
+        <h4>Affine Transform Smooth Param</h4>
+        <h5>Similarity Degree</h5>
+        <p><span>&omega; <sub>1</sub> (match size) </span><input type="range" min="0" max="1" step="0.01" defaultValue={params.smooth_w1} onChange={chParam('smooth_w1')} ></input> {params.smooth_w1} </p>
+        <p><span>&omega; <sub>2</sub> (match shape)</span><input type="range" min="0" max="1" step="0.01" value={params.smooth_w2} readOnly></input> {params.smooth_w2.toFixed(2)} </p>
+        
+        <h5>Smooth</h5>
+        <p><span>smooth<sub>a</sub> (match similarity) </span><input type="range" min="0" max="1" step="0.01" value={params.smooth_a} onChange={chParam('smooth_a')} ></input> {params.smooth_a} </p>
+        <p><span>smooth<sub>b</sub> (minimize rotation) </span><input type="range" min="0" max="1" step="0.01" value={params.smooth_b} onChange={chParam('smooth_b')}></input> {params.smooth_b} </p>
+        <p><span>smooth<sub>c</sub> (minimize area) </span><input type="range" min="0" max="1" step="0.01" value={params.smooth_c} readOnly></input> {params.smooth_c.toFixed(2)} </p>
+        <p><span>smooth<sub>d</sub> (adjust) </span><input type="range" min="0" max="20" step="0.1" value={params.smooth_d} onChange={chParam('smooth_d')}></input> {params.smooth_d} </p>
+        </div>
+    )
+}
 
 const Render : React.FC<RenderProps> = (props)=>{
     const [handle, setHandle] = useState<ReturnType<typeof RunAll>>()
     const [useWhat, setUseWhat] = useState('A')
+    
+
     useEffect(()=>{
-        setHandle(RunAll())
+        const h = RunAll()
+        setHandle(h)
+        if(props.onHandle) {
+            props.onHandle(h)
+        }
     }, [])
     
     const next = () =>{
@@ -39,6 +105,7 @@ const Render : React.FC<RenderProps> = (props)=>{
       <button onClick={transform}>
         Transform
       </button>
+      
     </div>)
 }
 
@@ -56,6 +123,7 @@ const camera = new THREE.PerspectiveCamera(75, canvas.Aspect(), 0.1, 1000);
 
 renderer.setSize(canvas.w, canvas.h);
 renderer.setClearColor(0x444444, 1.0);
+renderer.setPixelRatio(window.devicePixelRatio)
 
 camera.position.z = 5;
 var Resize=() => {
@@ -114,9 +182,9 @@ const makeLineFromVertices = (v : Vector3[]) => {
     return new THREE.Line(A_lineGeo, A_lineMaterial);
 }
 
-const A_vertices = new Array<Vector3>()
+let A_vertices = new Array<Vector3>()
 let A_line = makeLineFromVertices(A_vertices)
-const B_vertices = new Array<Vector3>()
+let B_vertices = new Array<Vector3>()
 let B_line = makeLineFromVertices(B_vertices)
 
 scene.add(A_line)
@@ -186,7 +254,7 @@ const keyPoints = new THREE.Group()
 scene.add(keyPoints)
 
 const addDots = (vec : Vector3[]) => {
-    [0xff0000, 0x00ff00, 0x0000ff].map((v, idx)=>{
+    [0xff0000, 0x00ff00, 0x0000ff].forEach((v, idx)=>{
         const mat = new THREE.MeshBasicMaterial({color: v});
         const geo = new THREE.CircleGeometry(0.06, 10)
         const c = new THREE.Mesh(geo, mat);
@@ -195,8 +263,16 @@ const addDots = (vec : Vector3[]) => {
     })
 }
 
-const triggerTransform = ()=>{
-    fuzzyWarper.init(A_vertices, B_vertices, getDefaultFuzzyParams())
+let defaultFuzzyParams = getDefaultFuzzyParams()
+
+const triggerTransform = (params?: FuzzyParams)=>{
+    if(A_vertices.length > B_vertices.length) {
+        const T = A_vertices;
+        A_vertices = B_vertices;
+        B_vertices = T;
+    }
+    keyPoints.clear()
+    fuzzyWarper.init(A_vertices, B_vertices, params || defaultFuzzyParams)
     addDots(fuzzyWarper.keyPoints.map(v=>{
         return B_vertices[v]
     }))
@@ -216,7 +292,8 @@ Test()
 
 return {
     next: ()=>{ useAorB = !useAorB; return useAorB? 'B' : 'A'  },
-    transform: ()=>{ triggerTransform() }
+    transform: (params?: FuzzyParams)=>{ triggerTransform(params) },
+    setDefaultParameter: (x:FuzzyParams) => { defaultFuzzyParams = x }
 }
 
 

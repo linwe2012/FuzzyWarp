@@ -2,16 +2,17 @@ import {Vector3, Matrix3, Vector2} from 'three'
 
 type TriangleVec = [Vector3, Vector3, Vector3]
 
-interface FuzzyParams {
+export interface FuzzyParams {
     smooth_a: number
     smooth_b: number
     smooth_c: number
+    smooth_d: number
     smooth_w1: number
     smooth_w2: number
 
     // constraint: sim_w1 + sim_w2 = 1
     sim_w1: number
-    sim_w2:number
+    sim_w2: number
 }
 
 
@@ -296,7 +297,7 @@ function polygonArea(poly:Vector3[]) {
     return Math.abs(sum)
 }
 
-function smooth_a(a:number, b:number, c:number, w1:number, w2: number, 
+function smooth_a(a:number, b:number, c:number, d: number, w1:number, w2: number, 
     poly_area_sum: number, t0: TriangleVec, t1: TriangleVec) {
     const S = smoothS(w1, w2, t0, t1);
     const R = bisect(t0).angleTo(bisect(t1))
@@ -304,7 +305,7 @@ function smooth_a(a:number, b:number, c:number, w1:number, w2: number,
     if (A < 1e-2) {
         return -Infinity
     }
-    return a * S + b * (1-R/Math.PI) + c * A
+    return a * S + b * (1-R/Math.PI) + c * (A / (A+d))
 }
 /*
 
@@ -363,7 +364,7 @@ function smoothKeyPoints(T0:Vector3[], T1:Vector3[], lookup: Int32Array, params:
     }
 
     const smooth = new Array<Smooth>();
-    const { smooth_a: a, smooth_b:b, smooth_c:c, smooth_w1: w1, smooth_w2: w2 } = params;
+    const { smooth_a: a, smooth_b:b, smooth_c:c, smooth_d:d, smooth_w1: w1, smooth_w2: w2 } = params;
 
     const area_sum = polygonArea(T0) + polygonArea(T1);
 
@@ -374,14 +375,14 @@ function smoothKeyPoints(T0:Vector3[], T1:Vector3[], lookup: Int32Array, params:
                 const v0 = j % T0.length;
                 const w0 = k % T0.length;
 
-                if(u0 == j || u0 == k || v0 == i || v0 == k || w0==i || w0 == j ){
+                if(u0 === j || u0 === k || v0 === i || v0 === k || w0===i || w0 === j ){
                     continue;
                 }
                 const u = reverse_lookup[u0]
                 const v = reverse_lookup[v0]
                 const w = reverse_lookup[w0]
 
-                const s = smooth_a(a, b, c, w1, w2, area_sum, 
+                const s = smooth_a(a, b, c, d, w1, w2, area_sum, 
                     [T1[u], T1[v], T1[w]],
                     [T0[u0], T0[v0], T0[w0]]
                     );
@@ -447,7 +448,7 @@ class Mat2 {
 
     // decompose to rotation theta & affine matrix
     decompose() : [number, Mat2] {
-        const det = this.det();
+        // const det = this.det();
         const sign = 1// Math.sign(det)
 
         const B = new Mat2();
@@ -565,7 +566,8 @@ function computeTransform(from:TriangleVec, to: TriangleVec) : Trans {
     let mFrom = t2m(from)
     let mTo = t2m(to);
     
-    const inverse = new Matrix3().getInverse(mFrom)
+    // const inverse = new Matrix3().getInverse(mFrom)
+    const inverse = mFrom.clone().invert()
     const transform = new Matrix3().multiplyMatrices(mTo, inverse);
     
     const translate = new Vector2(transform.elements[6], transform.elements[7])
@@ -751,13 +753,30 @@ export class FuzzyWarp {
     }
 }
 
+// export function getDefaultFuzzyParams() : FuzzyParams {
+//     return{
+//         smooth_a: 0.2, // shape similarity
+//         smooth_b: 0.3, // min rotation
+//         smooth_c: 0.5, // max area coverage
+//         smooth_d: 2,
+//         smooth_w1: 0.5,
+//         smooth_w2: 0.5,
+
+
+//         sim_w1: 0.5,
+//         sim_w2: 0.5
+//     }
+// }
+
 export function getDefaultFuzzyParams() : FuzzyParams {
     return{
-        smooth_a: 0.2, // shape similarity
-        smooth_b: 0.3, // min rotation
-        smooth_c: 0.5, // max area coverage
+        smooth_a: 0.4, // shape similarity
+        smooth_b: 0.4, // min rotation
+        smooth_c: 0.2, // max area coverage
+        smooth_d: 2,
         smooth_w1: 0.5,
         smooth_w2: 0.5,
+
 
         sim_w1: 0.5,
         sim_w2: 0.5
@@ -775,7 +794,7 @@ function AssertArrayEqual<T>(a: ArrayLike<T>, b: ArrayLike<T>) {
     }
 }
 
-const TestFuzzyGraph = ()=>{
+export const TestFuzzyGraph = ()=>{
     const data = [
         [-1.0, -1.0, 0],
         [0, -0.9, 0],

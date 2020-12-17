@@ -10,6 +10,10 @@ This project is 3rd course project for computer animations in ZJU.
 - Lab 2: [Free form deformation](https://github.com/linwe2012/FreeFormDeformation)
 - Lab 3: Fuzzy Shape warp (This project)
 
+The original paper can be found on IEEE: [A fuzzy approach to digital image warping](https://ieeexplore.ieee.org/abstract/document/511850)
+
+Or you can download the [pdf](docs/FuzzyApproach.pdf) at this repo.
+
 **Try [online Demo hosted on Github Pages](https://linwe2012.github.io/FuzzyWarp/)**
 
 Demo (Click to see full demo on Youtube):
