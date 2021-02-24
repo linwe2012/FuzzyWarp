@@ -32,3 +32,8 @@ em {
   margin-bottom: 10px;
   background: #282c34;
 }
+
+h4, h5 {
+  margin-bottom: 5px;
+  margin-top: 10px;
+}

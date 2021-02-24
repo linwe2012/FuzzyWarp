@@ -55,19 +55,35 @@ export const RenderSettings : React.FC<RenderSettingsProps> = (props)=>{
     return (
         <div>
         <h4>Fuzzy polygon similarity</h4>
-        <p><span>&omega; <sub>1</sub> (match size) </span><input type="range" min="0" max="1" step="0.01" defaultValue={params.sim_w1} onChange={chParam('sim_w1')} ></input> {params.sim_w1} </p>
-        <p><span>&omega; <sub>2</sub> (match shape)</span><input type="range" min="0" max="1" step="0.01" value={params.sim_w2} readOnly></input> {params.sim_w2} </p>
+        <table>
+            <tr><td><span>&omega; <sub>1</sub> (match size) </span></td>
+                <td><input type="range" min="0" max="1" step="0.01" defaultValue={params.sim_w1} onChange={chParam('sim_w1')} ></input> {params.sim_w1} </td>
+            </tr>
+            <tr><td><span>&omega; <sub>2</sub> (match shape)</span></td>
+                <td><input type="range" min="0" max="1" step="0.01" value={params.sim_w2} readOnly></input> {params.sim_w2} </td>
+            </tr>
+        </table>
         
+        <p></p>
+        <p></p>
         <h4>Affine Transform Smooth Param</h4>
         <h5>Similarity Degree</h5>
-        <p><span>&omega; <sub>1</sub> (match size) </span><input type="range" min="0" max="1" step="0.01" defaultValue={params.smooth_w1} onChange={chParam('smooth_w1')} ></input> {params.smooth_w1} </p>
-        <p><span>&omega; <sub>2</sub> (match shape)</span><input type="range" min="0" max="1" step="0.01" value={params.smooth_w2} readOnly></input> {params.smooth_w2.toFixed(2)} </p>
-        
+        <table>
+            <tr><td><span>&omega; <sub>1</sub> (match size) </span></td>
+                <td><input type="range" min="0" max="1" step="0.01" defaultValue={params.smooth_w1} onChange={chParam('smooth_w1')} ></input> {params.smooth_w1} </td>
+            </tr>
+            <tr><td><span>&omega; <sub>2</sub> (match shape)</span></td>
+                <td><input type="range" min="0" max="1" step="0.01" value={params.smooth_w2} readOnly></input> {params.smooth_w2.toFixed(2)} </td>
+            </tr>
+        </table>
+        <p></p>
         <h5>Smooth</h5>
-        <p><span>smooth<sub>a</sub> (match similarity) </span><input type="range" min="0" max="1" step="0.01" value={params.smooth_a} onChange={chParam('smooth_a')} ></input> {params.smooth_a} </p>
-        <p><span>smooth<sub>b</sub> (minimize rotation) </span><input type="range" min="0" max="1" step="0.01" value={params.smooth_b} onChange={chParam('smooth_b')}></input> {params.smooth_b} </p>
-        <p><span>smooth<sub>c</sub> (minimize area) </span><input type="range" min="0" max="1" step="0.01" value={params.smooth_c} readOnly></input> {params.smooth_c.toFixed(2)} </p>
-        <p><span>smooth<sub>d</sub> (adjust) </span><input type="range" min="0" max="20" step="0.1" value={params.smooth_d} onChange={chParam('smooth_d')}></input> {params.smooth_d} </p>
+        <table>
+        <tr><td><span>smooth<sub>a</sub> (match similarity) </span> </td><td> <input type="range" min="0" max="1" step="0.01" value={params.smooth_a} onChange={chParam('smooth_a')} ></input> {params.smooth_a} </td></tr>
+        <tr><td><span>smooth<sub>b</sub> (minimize rotation) </span></td><td> <input type="range" min="0" max="1" step="0.01" value={params.smooth_b} onChange={chParam('smooth_b')}></input>  {params.smooth_b} </td></tr>
+        <tr><td><span>smooth<sub>c</sub> (minimize area) </span>    </td><td> <input type="range" min="0" max="1" step="0.01" value={params.smooth_c} readOnly></input>             {params.smooth_c.toFixed(2)} </td></tr>
+        <tr><td><span>smooth<sub>d</sub> (adjust) </span>           </td><td> <input type="range" min="0" max="20" step="0.1" value={params.smooth_d} onChange={chParam('smooth_d')}></input>  {params.smooth_d} </td></tr>
+        </table>
         </div>
     )
 }

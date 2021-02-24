@@ -30,11 +30,11 @@ const App: React.FC = () => {
 
       <div className='seperator'></div>
       <h3>Parameters: </h3>
-
       <RenderSettings handle={handle}></RenderSettings>
       <div className='seperator'></div>
       <h3> Note: </h3>
       <li> The 3 dots, blue, green, red indicates the reference points, This can be changed via Fuzzy polygon similarity. </li>
+      <p></p>
       <PersonalPage/>
       </div>
     </div>
