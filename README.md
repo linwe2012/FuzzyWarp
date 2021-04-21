@@ -3,20 +3,20 @@
 
 ![IMG](https://img.shields.io/badge/Typescript-tsx-222222?labelColor=007ACC&logo=typescript)  [![IMG](https://img.shields.io/badge/Youtube-Demo-222222?labelColor=ff0000&logo=youtube)](https://youtu.be/KCKw1l-7f_s) [![IMG](https://img.shields.io/badge/Play%20with-online%20Demo-222222?logo=github)](https://linwe2012.github.io/FuzzyWarp)
 
-Implements Fuzzy warp algorithm with Typescript + React.
+Implements Fuzzy Warp algorithm with Typescript + React.
 
-This project is 3rd course project for computer animations in ZJU.
+This project is my 3rd course project for the course Computer Animations at ZJU. All projects are listed below:
 - Lab 1: [Spline](https://github.com/linwe2012/Spline) 
 - Lab 2: [Free form deformation](https://github.com/linwe2012/FreeFormDeformation)
 - Lab 3: Fuzzy Shape warp (This project)
 
 The original paper can be found on IEEE: [A fuzzy approach to digital image warping](https://ieeexplore.ieee.org/abstract/document/511850)
 
-Or you can download the [pdf](docs/FuzzyApproach.pdf) at this repo.
+Or you can download the [pdf](docs/FuzzyApproach.pdf) from this repo directly.
 
-**Try [online Demo hosted on Github Pages](https://linwe2012.github.io/FuzzyWarp/)**
+**Try [Online Demo hosted on Github Pages](https://linwe2012.github.io/FuzzyWarp/)**
 
-Demo (Click to see full demo on Youtube):
+Video Demo (Click to see full video on Youtube):
 
 [![Demo](https://j.gifs.com/4QBO57.gif)](https://youtu.be/KCKw1l-7f_s)
 
