@@ -21,6 +21,16 @@ Video Demo (Click to see full video on Youtube):
 [![Demo](https://j.gifs.com/4QBO57.gif)](https://youtu.be/KCKw1l-7f_s)
 
 
+## Description
+
+
+The project implements a fuzzy warp algorithm for animating transitions between 2 polygons.
+The polygons can have a different number of vertices and do not have to be convex. The algorithm will find matching between vertices by building a 2D similarity matrix containing similarity measures for each pair of vertices from both polygons.
+A monotonic path that has a max element sum is found via dynamic programming in the matrix. The path will give vertex correspondence for the polygon.
+Each vertex with its neighboring vertices will form a triangle, providing the transform matrix from starting polygon to ending polygon.
+The animation is done by interpolating translation and rotation decomposed from the transform matrix.
+I used three.js for a 2D visualization because it provides a framework for playing animations.
+
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app). You need to install [Node.js](https://nodejs.org/en/) & [Yarn](https://classic.yarnpkg.com/en/docs/install) to run it.
 
